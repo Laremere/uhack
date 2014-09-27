@@ -1,0 +1,80 @@
+@font-face {
+    font-family: 'Archistico';
+    src: url('Archistico_Simple-webfont.ttf') format('truetype'),
+         url('Archistico_Simple-webfont.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+html {
+    background: #fff;
+    color: #222222;
+    font-size: 1.2rem;
+    min-height: 100%;
+    line-height: 1.5;
+    margin: 0;
+    padding: 0;
+    position: relative;
+}
+
+h1,h2,h3 {
+    font-family: sans-serif;   
+}
+
+body {
+    height: 100%;
+    margin: 0 auto;
+    width: 800px;
+}
+
+header {
+    font-family: 'Archistico';
+}
+
+.left {
+    float: left;
+    
+}
+
+.right {
+    float: right;   
+}
+
+.h-title {
+    float: left;
+    margin-right: 50px;
+    margin-top: 20px;
+}
+
+.h-banner {
+    width: 100%;
+}
+
+.h-list {
+    display: flex;
+    justify-content: space-around;
+}
+
+.h-list-item {
+    display: inline;
+    font-size: 1.5rem;
+    margin-right: 2em;
+    text-decoration: none;
+}
+
+footer {
+    font-family: sans-serif;
+    bottom: 0;
+    color: gray;
+    text-align: center;
+    width: 100%;
+}
+
+.a-footer:link {
+    color: #51d6fd;
+    text-decoration: none;
+}
+
+.a-footer:hover {
+    text-decoration: underline;   
+}

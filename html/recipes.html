@@ -1,0 +1,20 @@
+{{template "header"}}
+	<form name="input" action="https://vps.redig.us/search/" method="post">
+		Recipe Name: <input type="text" name="recipeName"><br>
+		Ingredients: <input type="text" name="ingredients"><br>
+		Cuisine: <select name="cuisine">
+					<option value="">All</option>
+					<option value="item1">Item1</option>
+					<option value="item2">Item2</option>
+				</select><br>
+		Technique: <input type="text" name="method"><br>
+		<input type="submit" value="Search">
+	</form>
+
+
+    <h1>Completed Recipes</h1>
+    <p class="byline"> - view recipes you've completed</p>
+    <h1>Recipe Suggestions</h1>
+    <p class="byline"> - view similar recipes</p>
+    <h1></h1>
+{{template "footer"}}

@@ -1,0 +1,10 @@
+{{template "header"}}
+	{{range .Results}}
+		<a href="https://vps.redig.us/recipe/?id={{.Id}}">
+			<image src="{{.Thumb}}"/>
+			<br/>
+			{{.Name}}
+			<br/>
+		</a>
+	{{end}}
+{{template "footer"}}
