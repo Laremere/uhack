@@ -117,13 +117,22 @@ input[type="text"] {
     border-radius: 7px;
 }
 
-input[type="submit"] {
-    background: #6CB591;
+button[type=submit], input[type=submit] {
+    background-color: #6CB591;
     color: #eee;
     font-size: .9rem;
     padding: 7px 14px;
     border-radius: 5px;
     border: none;
+}
+
+button {
+    background-color: #2EB8E6;
+    box-shadow: none;
+    border-radius: 10px;
+    border: none;
+    font-size: .8rem;
+    padding: 8px 12px;
 }
 
 
@@ -166,30 +175,35 @@ input[type="submit"] {
     width: 45%;
 }
 
-.recipe-form label {
-    text-align: right;
-    width: 30%;
-}
-
-.recipe-form input, select {
-    float: right;
-}
-
 .reg-form {
     display: block;
     width: 40%;
 }
 
-.reg-form label {
+.reg-form label, .recipe-form label {
     text-align: right;
     width: 30%;
 }
 
-.reg-form input {
+.reg-form input, .recipe-form input, select {
     float: right;
 }
 
-.recipe-intro {
-    display: block;
+.recipe-info {
+    display: inline-block;
+    margin-left: 25px;
+}
 
+.recipe-intro {
+    white-space: nowrap;
+}
+
+.search-page {
+    display: inline
+
+}
+
+.search-page-jump {
+    display: inline-block;
+    margin-right: 20px;
 }

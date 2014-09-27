@@ -13,7 +13,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -236,7 +235,9 @@ func ApiCall(url string, structure interface{}) error {
 }
 
 type RecipeSearchResults struct {
-	Results []*RecipeSearchResult
+	Results  []*RecipeSearchResult
+	NextPage string
+	PrevPage string
 }
 
 type RecipeSearchResult struct {
@@ -257,6 +258,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var offset int64
 	params := make([]string, 0)
 	if value := r.Form.Get("recipeName"); value != "" {
 		params = append(params, "name-contains="+value)
@@ -271,12 +273,24 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		params = append(params, "method="+value)
 	}
 	if value := r.Form.Get("offset"); value != "" {
+		offset, err = strconv.ParseInt(value, 10, 64)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		params = append(params, "offset="+value)
 	}
 	params = append(params, "limit=20")
 
 	url := "http://api.pearson.com:80/kitchen-manager/v1/recipes?" + strings.Join(params, "&")
 	var result RecipeSearchResults
+
+	if offset > 0 {
+		r.Form.Set("offset", strconv.FormatInt(offset-20, 10))
+		result.PrevPage = "https://vps.redig.us/search/?" + r.Form.Encode()
+	}
+	r.Form.Set("offset", strconv.FormatInt(offset+20, 10))
+	result.NextPage = "https://vps.redig.us/search/?" + r.Form.Encode()
 
 	err = ApiCall(url, &result)
 	if err != nil {
@@ -316,6 +330,7 @@ type IngredientDetail struct {
 	Quantity    string
 	Unit        string
 	Preparation string
+	prince      string
 }
 
 var AsciiFilter = regexp.MustCompile("[^A-Za-z0-9 [:punct:]]")
@@ -335,6 +350,27 @@ func recipeHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	// for _, gredient := range result.Ingredients {
+
+	// type targetResponseRoot struct {
+	// 	TotalPages string
+	// }
+	// type targetResponse struct {
+	// 	Root targetResponseRoot
+	// }
+
+	// var tr targetResponse
+
+	// url := "https://api.target.com/v2/products/search?limit=1&searchTerm=" + html.EscapeString(gredient.Name) + "&key=" + "J5PsS2XGuqCnkdQq0Let6RSfvU7oyPwF"
+	// err = ApiCall(url, &tr)
+	// if err != nil {
+	// 	log.Println(err.Error())
+	//http.Error(w, err.Error(), http.StatusInternalServerError)
+	//return
+	// }
+	//log.Println(tr.Root.TotalPages)
+	// }
 
 	for i := range result.Directions {
 		result.Directions[i] = AsciiFilter.ReplaceAllString(result.Directions[i], "")
@@ -379,7 +415,7 @@ func madeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if count > 0 {
-		http.Redirect(w, r, "https://vps.redig.us/recipe/?id="+rid, 303)
+		http.Redirect(w, r, "https://vps.redig.us/badges/", 303)
 		return
 	}
 
@@ -502,7 +538,7 @@ func madeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//Detect Completed Badges
-	rows, err = db.Query("SELECT BadgeTemplateID FROM Badges JOIN UsersBadges ON Badges.ID = UsersBadges.BID WHERE UsersBadges.UID=? AND Badges.RequiredCount = UsersBadges.Progress", uid)
+	rows, err = db.Query("SELECT BadgeTemplateID, Badges.ID FROM Badges JOIN UsersBadges ON Badges.ID = UsersBadges.BID WHERE UsersBadges.UID=? AND Badges.RequiredCount = UsersBadges.Progress AND UsersBadges.Status = 0", uid)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -527,8 +563,9 @@ func madeHandler(w http.ResponseWriter, r *http.Request) {
 	BsI.Badges = make([]*BadgeIssue, 0)
 
 	for rows.Next() {
+		var finishedBadgeID string
 		var b BadgeIssue
-		err = rows.Scan(&b.Temid)
+		err = rows.Scan(&b.Temid, &finishedBadgeID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -539,7 +576,12 @@ func madeHandler(w http.ResponseWriter, r *http.Request) {
 		b.IssuedToFirst = first
 		b.IssuedToLast = last
 		BsI.Badges = append(BsI.Badges, &b)
-		fmt.Println("HI:", b.Temid)
+
+		_, err = db.Exec("UPDATE UsersBadges SET Status=1 WHERE UID=? AND BID=?", uid, finishedBadgeID)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	client := &http.Client{}
@@ -552,22 +594,23 @@ func madeHandler(w http.ResponseWriter, r *http.Request) {
 		req.Header.Set("Authorization", "Basic TEFIOVltTHFGLTV4XzlLODRLOFg6")
 		req.Header.Set("content-type", "application/json")
 
-		resp, err := client.Do(req)
+		_, err := client.Do(req)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		io.Copy(os.Stdin, resp.Body)
+		// io.Copy(os.Stdin, resp.Body)
 
-		{
-			var postMessage bytes.Buffer
-			encoder := json.NewEncoder(&postMessage)
-			encoder.Encode(&val)
-			io.Copy(os.Stdin, &postMessage)
+		// {
+		// 	var postMessage bytes.Buffer
+		// 	encoder := json.NewEncoder(&postMessage)
+		// 	encoder.Encode(&val)
+		// 	io.Copy(os.Stdin, &postMessage)
 
-		}
+		// }
 	}
 
+	http.Redirect(w, r, "https://vps.redig.us/badges/", 303)
 	// resp, err := http.Post("https://sandbox.youracclaim.com/api/v1/organizations/21a1da4f-d12d-44fb-adc0-c07cbc2c4220/badges", "text/json", &postMessage)
 	// if err != nil {
 	// 	http.Error(w, err.Error(), http.StatusInternalServerError)

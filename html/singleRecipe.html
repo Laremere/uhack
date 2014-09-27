@@ -1,14 +1,15 @@
 {{template "header"}}
 	
+	<h1>{{.Name}}</h1>
 	<div class="recipe-intro">
-		<h1>{{.Name}}</h1>
 		<image src="{{.Image}}"/>
 
+		<div class="recipe-info">
 		<p><strong>Cuisine: </strong><em>{{.Cuisine}}</em></p>
 		<p><strong>Cooking Method: </strong><em>{{.Cooking_Method}}</em></p>
 		<p><strong>Serves: </strong><em>{{.Serves}}</em></p>
 		<p><strong>Yield: </strong><em>{{.Yields}}</em></p>
-
+		</div>
 	</div>
 
 	<br/>
@@ -17,7 +18,8 @@
 		<h2>Ingredients</h2>
 		<ul>
 			{{range .Ingredients}}
-			<li>
+			<li style="list-style-type: none;">
+				<a href="http://www.target.com/s?searchTerm={{.Name}}&category=9975358%7CAll%7Cmatchallpartial%7Cgrocery+%26+essentials" target="_blank"><image src="https://vps.redig.us/static/targetlook.png" /></a>
 				{{.Name}}
 				{{.Quantity}}
 				{{.Unit}}

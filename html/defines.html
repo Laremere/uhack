@@ -1,15 +1,44 @@
 {{define "header"}}
 <html lang="en">
     <head>
-        <title></title>
+        <title>RecipEats</title>
         <meta charset="utf-8">
         <link rel="stylesheet" href="https://vps.redig.us/static/pageui.css">
+        <script type="text/javascript">
+            function getCookie (cname) {
+                var name = cname + "=";
+                var ca = document.cookie.split(';');
+                for (var i = 0; i < ca.length; i++) {
+                    var c = ca[i];
+                    while (c.charAt(0)==' ') c = c.substring(1);
+                    if (c.indexOf(name) != -1) {
+                        return c.substring(name.length, c.length);
+                    }
+                }
+                return "";
+            }
+
+            function checkCookie() {
+                var user = getCookie("authtoken");
+                if (user != "") {
+                    document.getElementById("login").style.visibility="hidden";
+                    document.getElementById("register").style.visibility="hidden";
+                } else{
+                    document.getElementById("logout").style.visibility="hidden";
+                };
+            }
+
+            function del_cookie() {
+                document.cookie = 'authtoken=;domain=vps.redig.us;Path=/;max-age=0;expires=Thu, 01-Jan-70 00:00:01 GMT;';
+                window.location.href = "https://vps.redig.us/home/";
+            }
+        </script>
     </head>
 
     <body>
         <header>
             <img src="https://vps.redig.us/static/banner.png" class="h-banner">
-            <h1 class="h-title">Header Title</h1>
+            <h1 class="h-title">RecipEats</h1>
             <nav class="h-list">
                 <p class="h-list-item"><a href="http://vps.redig.us/home/">Home</a></p>
                 <p class="h-list-item"><a href="http://vps.redig.us/recipes/">Recipes</a></p>
@@ -17,10 +46,9 @@
                 <p class="h-list-item"><a href="http://vps.redig.us/about/">About</a></p>
             </nav>
             <div class="logreg">
-                <form>
-                    <button><a href="https://vps.redig.us/login/">Login</a></button>
-                    <button><a href="https://vps.redig.us/register/">Register</a></button>
-                </form>
+                    <button id="login"><a href="https://vps.redig.us/login/">Login</a></button>
+                    <button id="register"><a href="https://vps.redig.us/register/">Register</a></button>
+                    <button id="logout" onclick="del_cookie()">Logout</button>
             </div>
         </header>
 {{end}}
@@ -30,6 +58,9 @@
     		Banner courtesy of : <a class="a-footer" href="http://www.freefoodphotos.com/">http://www.freefoodphotos.com/</a><br>
             Powered by Pearson Kitchen Manager
     	</footer>
+        <script type="text/javascript">
+            checkCookie();
+        </script>
     </body>
 </html>
 {{end}}

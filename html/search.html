@@ -9,4 +9,16 @@
 		</a>
 	{{end}}
 	</div>
+	<div class="search-page">
+		<div class="search-page-jump">
+		{{if .PrevPage}}
+		<a href="{{.PrevPage}}">Previous Page</a>
+		{{end}}
+		</div>
+		<div class="search-page-jump">
+			{{if .NextPage}}
+			<a href="{{.NextPage}}">Next Page</a>
+			{{end}}
+		</div>
+	</div>
 {{template "footer"}}
