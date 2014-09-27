@@ -43,7 +43,9 @@ func main() {
 	http.HandleFunc("/registercallback/", registerHandler)
 	http.HandleFunc("/logincallback/", loginHandler)
 	http.HandleFunc("/search/", searchHandler)
-	http.HandleFunc("/", indexHandler)
+	http.HandleFunc("/recipe/", recipeHandler)
+	http.HandleFunc("/", simplePage("home"))
+	//http.HandleFunc("/", indexHandler)
 
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
 
@@ -213,6 +215,20 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, authenticate(r))
 }
 
+func ApiCall(url string, structure interface{}) error {
+	ApiResp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+
+	body, err := ioutil.ReadAll(ApiResp.Body)
+	if err != nil {
+		return err
+	}
+
+	return json.Unmarshal(body, structure)
+}
+
 type RecipeSearchResults struct {
 	Results []*RecipeSearchResult
 }
@@ -254,23 +270,64 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	params = append(params, "limit=20")
 
 	url := "http://api.pearson.com:80/kitchen-manager/v1/recipes?" + strings.Join(params, "&")
-	ApiResp, err := http.Get(url)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	body, err := ioutil.ReadAll(ApiResp.Body)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
 	var result RecipeSearchResults
 
-	json.Unmarshal(body, &result)
+	err = ApiCall(url, &result)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	tem, err := template.ParseFiles("html/search.html", "html/defines.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	err = tem.Execute(w, &result)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+type RecipeDetail struct {
+	Name           string
+	Id             string
+	Image          string
+	Thumb          string
+	Cuisine        string
+	Cooking_Method string
+	Serves         float64
+	Yields         string
+	Ingredients    []*IngredientDetail
+	Directions     []string
+}
+
+type IngredientDetail struct {
+	Name        string
+	Id          string
+	Quantity    string
+	Unit        string
+	Preparation string
+}
+
+func recipeHandler(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	url := "https://api.pearson.com/kitchen-manager/v1/recipes/" + r.Form.Get("id")
+
+	var result RecipeDetail
+	err = ApiCall(url, &result)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	tem, err := template.ParseFiles("html/recipe.html", "html/defines.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -6,11 +6,18 @@
     font-style: normal;
 }
 
+.byline {
+    position: relative;
+    margin-top: -30px;
+    margin-left: 50px;
+}
+
 html {
     background: #fff;
     color: #222222;
     font-size: 1.2rem;
     min-height: 100%;
+    font-family: sans-serif;
     line-height: 1.5;
     margin: 0;
     padding: 0;
@@ -18,10 +25,11 @@ html {
 }
 
 h1,h2,h3 {
-    font-family: sans-serif;   
+    font-family: sans-serif;
 }
 
 body {
+    position: relative;
     height: 100%;
     margin: 0 auto;
     width: 800px;
@@ -29,6 +37,7 @@ body {
 
 header {
     font-family: 'Archistico';
+    margin-top: 10px;
 }
 
 .left {
@@ -40,7 +49,23 @@ header {
     float: right;   
 }
 
+footer {
+    font-family: sans-serif;
+    color: gray;
+    text-align: center;
+}
+
+.a-footer:link {
+    color: #51d6fd;
+    text-decoration: none;
+}
+
+.a-footer:hover {
+    text-decoration: underline;   
+}
+
 .h-title {
+    font-family: 'Archistico';
     float: left;
     margin-right: 50px;
     margin-top: 20px;
@@ -58,23 +83,9 @@ header {
 .h-list-item {
     display: inline;
     font-size: 1.5rem;
-    margin-right: 2em;
-    text-decoration: none;
 }
 
-footer {
-    font-family: sans-serif;
-    bottom: 0;
-    color: gray;
-    text-align: center;
-    width: 100%;
-}
-
-.a-footer:link {
-    color: #51d6fd;
-    text-decoration: none;
-}
-
-.a-footer:hover {
-    text-decoration: underline;   
+.h-list-item:hover {
+    transition: .5s ease;
+    text-decoration: underline;
 }
