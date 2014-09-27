@@ -1,5 +1,6 @@
 {{template "header"}}
 {{if .Auth}}
+	<a href="https://sandbox.youracclaim.com/profile/badges">View your Badges on Acclaim</a><br/><hr/>
 	{{range .Badges}}
 		{{.Name}}<br/>
 		{{.Description}}<br/>
