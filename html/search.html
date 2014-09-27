@@ -1,4 +1,5 @@
 {{template "header"}}
+	<div class="search-results">
 	{{range .Results}}
 		<a href="https://vps.redig.us/recipe/?id={{.Id}}">
 			<image src="{{.Thumb}}"/>
@@ -7,4 +8,5 @@
 			<br/>
 		</a>
 	{{end}}
+	</div>
 {{template "footer"}}

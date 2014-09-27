@@ -1,0 +1,27 @@
+{{template "header"}}
+	{{.Name}}
+	<image src="{{.Image}}"/>
+	{{.Cuisine}}
+	{{.Cooking_Method}}
+	{{.Serves}}
+	{{.Yields}}
+	<ul>
+		{{range .Ingredients}}
+		<li>
+			{{.Name}}
+			{{.Quantity}}
+			{{.Unit}}
+			{{.Preparation}}
+		</li>
+		{{end}}
+	</ul>
+
+	<ol>
+	{{range .Directions}}
+		<li>{{.}}</li>
+	{{end}}
+	</ol>
+	{{if .Auth}}
+		<a href="https://vps.redig.us/made/?id={{.Id}}">I made this!</a>
+	{{end}}
+{{template "footer"}}

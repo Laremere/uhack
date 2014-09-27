@@ -1,3 +1,11 @@
 {{template "header"}}
-
+{{if .Auth}}
+	{{range .Badges}}
+		{{.Name}}<br/>
+		{{.Description}}<br/>
+		{{.Progress}}/{{.ReqCount}}<br/>
+	{{end}}
+{{else}}
+	Create an account or log in to view badge progress.
+{{end}}
 {{template "footer"}}

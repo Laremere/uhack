@@ -38,19 +38,12 @@ body {
 header {
     font-family: 'Archistico';
     margin-top: 10px;
-}
-
-.left {
-    float: left;
-    
-}
-
-.right {
-    float: right;   
+    margin-bottom: 20px;
 }
 
 footer {
     font-family: sans-serif;
+    clear: both;
     color: gray;
     text-align: center;
 }
@@ -76,6 +69,7 @@ footer {
 }
 
 .h-list {
+    
     display: flex;
     justify-content: space-around;
 }
@@ -85,7 +79,46 @@ footer {
     font-size: 1.5rem;
 }
 
+.h-list-item a:link {
+    color: inherit;
+    text-decoration: none;
+}
+
 .h-list-item:hover {
-    transition: .5s ease;
     text-decoration: underline;
+}
+
+form {
+    text-align: right;
+    width: 4em;
+}
+
+form label {
+    display: inline;
+    text-align: left;
+}
+
+
+input[type=text] {
+    line-height: 1.5;
+}
+
+.search-results {
+
+}
+
+.search-results a {
+    
+}
+
+.logreg {
+    font-family: sans-serif;
+    text-decoration: none;
+    text-align: right;
+}
+
+.intro {
+    font-family: serif;
+    font-size: 1.5rem;
+    color: #99997F;
 }

@@ -13,6 +13,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -39,11 +40,13 @@ func main() {
 	http.HandleFunc("/register/", simplePage("register"))
 	http.HandleFunc("/login/", simplePage("login"))
 	http.HandleFunc("/about/", simplePage("about"))
-	http.HandleFunc("/recipes/", simplePage("recipes"))
+	http.HandleFunc("/recipes/", recipesHandler)
 	http.HandleFunc("/registercallback/", registerHandler)
 	http.HandleFunc("/logincallback/", loginHandler)
 	http.HandleFunc("/search/", searchHandler)
 	http.HandleFunc("/recipe/", recipeHandler)
+	http.HandleFunc("/made/", madeHandler)
+	http.HandleFunc("/badges/", badgesHandler)
 	http.HandleFunc("/", simplePage("home"))
 	//http.HandleFunc("/", indexHandler)
 
@@ -291,6 +294,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type RecipeDetail struct {
+	Auth           bool
 	Name           string
 	Id             string
 	Image          string
@@ -311,6 +315,8 @@ type IngredientDetail struct {
 	Preparation string
 }
 
+var AsciiFilter = regexp.MustCompile("[^A-Za-z0-9 [:punct:]]")
+
 func recipeHandler(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
@@ -327,7 +333,117 @@ func recipeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tem, err := template.ParseFiles("html/recipe.html", "html/defines.html")
+	for i := range result.Directions {
+		result.Directions[i] = AsciiFilter.ReplaceAllString(result.Directions[i], "")
+	}
+
+	tem, err := template.ParseFiles("html/singleRecipe.html", "html/defines.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	result.Auth = authenticate(r) != 0
+	err = tem.Execute(w, &result)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func madeHandler(w http.ResponseWriter, r *http.Request) {
+	uid := authenticate(r)
+	if uid == 0 {
+		http.Error(w, "Not logged in", http.StatusInternalServerError)
+		return
+	}
+
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	rid := r.Form.Get("id")
+
+	var count int
+	err = db.QueryRow("SELECT COUNT(*) FROM UsersRecipes WHERE UID=? AND RID=?", uid, rid).Scan(&count)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if count > 0 {
+		http.Redirect(w, r, "https://vps.redig.us/recipe/?id="+rid, 303)
+		return
+	}
+
+	_, err = db.Exec("INSERT INTO UsersRecipes (UID, RID) VALUES ( ? , ? )", uid, rid)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+}
+
+type BadgesPage struct {
+	Auth   bool
+	Badges []*Badge
+}
+
+type Badge struct {
+	Name        string
+	Description string
+	ReqCount    int64
+	Progress    int64
+}
+
+func badgesHandler(w http.ResponseWriter, r *http.Request) {
+	var result BadgesPage
+
+	uid := authenticate(r)
+	result.Auth = uid != 0
+
+	if result.Auth {
+
+		rows, err := db.Query(`SELECT 
+		Badges.Name, Badges.Description, Badges.RequiredCount, UB.Progress 
+		FROM Badges 
+		LEFT OUTER JOIN 
+			( SELECT Progress, BID
+				FROM UsersBadges 
+				WHERE UsersBadges.UID=?
+				) AS UB
+		ON UB.BID = Badges.ID 
+		`, uid)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		result.Badges = make([]*Badge, 0)
+		for rows.Next() {
+			var b Badge
+			var progress sql.NullInt64
+			err = rows.Scan(&b.Name, &b.Description, &b.ReqCount, &progress)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			if progress.Valid {
+				b.Progress = progress.Int64
+				if b.Progress > b.ReqCount {
+					b.Progress = b.ReqCount
+				}
+			} else {
+				b.Progress = 0
+			}
+			result.Badges = append(result.Badges, &b)
+		}
+	}
+
+	tem, err := template.ParseFiles("html/badges.html", "html/defines.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -337,4 +453,34 @@ func recipeHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+}
+
+func recipesHandler(w http.ResponseWriter, r *http.Request) {
+	type Cuisines struct {
+	}
+
+	type CuisinesResponse struct {
+	}
+
+	url := "http://api.pearson.com:80/kitchen-manager/v1/cuisines?limit=10000"
+	var result RecipeSearchResults
+
+	err = ApiCall(url, &result)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	tem, err := template.ParseFiles("html/search.html", "html/defines.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	err = tem.Execute(w, &result)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 }
