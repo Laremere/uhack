@@ -1,33 +1,39 @@
 {{template "header"}}
-	<div class="center">
-	<div class="singleRecipe-title">
-		{{.Name}}
-		{{.Cuisine}}<br>
-	</div>
-	<image src="{{.Image}}"/><br>
-	<div class="singleRecpe-subtitle">
-		{{.Cooking_Method}}
-		{{.Serves}}
-		{{.Yields}}
-	</div>
-	</div>
-	<ul>
-		{{range .Ingredients}}
-		<li>
-			{{.Name}}
-			{{.Quantity}}
-			{{.Unit}}
-			{{.Preparation}}
-		</li>
-		{{end}}
-	</ul>
+	
+	<div class="recipe-intro">
+		<h1>{{.Name}}</h1>
+		<image src="{{.Image}}"/>
 
-	<ol>
-	{{range .Directions}}
-		<li>{{.}}</li>
-	{{end}}
-	</ol>
-	{{if .Auth}}
-		<a href="https://vps.redig.us/made/?id={{.Id}}">I made this!</a>
-	{{end}}
+		<p><strong>Cuisine: </strong><em>{{.Cuisine}}</em></p>
+		<p><strong>Cooking Method: </strong><em>{{.Cooking_Method}}</em></p>
+		<p><strong>Serves: </strong><em>{{.Serves}}</em></p>
+		<p><strong>Yield: </strong><em>{{.Yields}}</em></p>
+
+	</div>
+
+	<br/>
+
+	<div class="recipe-main">
+		<h2>Ingredients</h2>
+		<ul>
+			{{range .Ingredients}}
+			<li>
+				{{.Name}}
+				{{.Quantity}}
+				{{.Unit}}
+				{{.Preparation}}
+			</li>
+			{{end}}
+		</ul>
+
+		<h2>Directions</h2>
+		<ol>
+		{{range .Directions}}
+			<li>{{.}}</li>
+		{{end}}
+		</ol>
+		{{if .Auth}}
+			<a href="https://vps.redig.us/made/?id={{.Id}}">I made this!</a>
+		{{end}}
+	</div>
 {{template "footer"}}

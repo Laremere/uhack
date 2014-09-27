@@ -10,6 +10,10 @@
     text-align: center;
 }
 
+.left {
+    float: left;
+}
+
 .byline {
     position: relative;
     margin-top: -30px;
@@ -132,11 +136,11 @@ input[type="submit"] {
 
 .logreg a:link {
     background: #2EB8E6;
-    border-radius: 7px;
+    
     color: #eee;
     margin: 4px;
     text-decoration: none;
-    padding: 10px 15px;
+    
 }
 
 .logreg a:visited {
@@ -173,7 +177,7 @@ input[type="submit"] {
 
 .reg-form {
     display: block;
-    width: 45%;
+    width: 40%;
 }
 
 .reg-form label {
@@ -185,7 +189,7 @@ input[type="submit"] {
     float: right;
 }
 
-.singleRecipe-title {
-    display: inline;
-    
+.recipe-intro {
+    display: block;
+
 }

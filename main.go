@@ -510,10 +510,10 @@ func madeHandler(w http.ResponseWriter, r *http.Request) {
 
 	type BadgeIssue struct {
 		//UserId string `json:"user_id"`
-		Email         string `json:"user_id"`
-		Temid         string `json:"badge_template_id"`
-		IssuedAt      string `json:"issued_at"`
-		IssuedTo      string `json:"issued_to"`
+		Email    string `json:"recipient_email"`
+		Temid    string `json:"badge_template_id"`
+		IssuedAt string `json:"issued_at"`
+		//IssuedTo      string `json:"issued_to"`
 		IssuedToFirst string `json:"issued_to_first_name"`
 		IssuedToLast  string `json:"issued_to_last_name"`
 		Expires       *int   `json:"expires_at"`
@@ -534,23 +534,39 @@ func madeHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		b.Email = email
-		b.IssuedAt = time.Now().Format("2006-01-02 03:04:05") + " -0500"
-		b.IssuedTo = first + " " + last
+		b.IssuedAt = time.Now().Format("2006-01-02 03:04:05") + " -0600"
+		//b.IssuedTo = first + " " + last
 		b.IssuedToFirst = first
 		b.IssuedToLast = last
 		BsI.Badges = append(BsI.Badges, &b)
 		fmt.Println("HI:", b.Temid)
 	}
 
-	var postMessage bytes.Buffer
-	encoder := json.NewEncoder(&postMessage)
-	encoder.Encode(&BsI)
-
-	req, _ := http.NewRequest("POST", "https://sandbox.youracclaim.com/api/v1/organizations/21a1da4f-d12d-44fb-adc0-c07cbc2c4220/badges", &postMessage)
-	req.Header.Set("Authorization", "Basic TEFIOVltTHFGLTV4XzlLODRLOFg6")
-
 	client := &http.Client{}
-	resp, err := client.Do(req)
+
+	for _, val := range BsI.Badges {
+		var postMessage bytes.Buffer
+		encoder := json.NewEncoder(&postMessage)
+		encoder.Encode(&val)
+		req, _ := http.NewRequest("POST", "https://sandbox.youracclaim.com/api/v1/organizations/21a1da4f-d12d-44fb-adc0-c07cbc2c4220/badges", &postMessage)
+		req.Header.Set("Authorization", "Basic TEFIOVltTHFGLTV4XzlLODRLOFg6")
+		req.Header.Set("content-type", "application/json")
+
+		resp, err := client.Do(req)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		io.Copy(os.Stdin, resp.Body)
+
+		{
+			var postMessage bytes.Buffer
+			encoder := json.NewEncoder(&postMessage)
+			encoder.Encode(&val)
+			io.Copy(os.Stdin, &postMessage)
+
+		}
+	}
 
 	// resp, err := http.Post("https://sandbox.youracclaim.com/api/v1/organizations/21a1da4f-d12d-44fb-adc0-c07cbc2c4220/badges", "text/json", &postMessage)
 	// if err != nil {
@@ -558,15 +574,6 @@ func madeHandler(w http.ResponseWriter, r *http.Request) {
 	// 	return
 	// }
 
-	io.Copy(os.Stdin, resp.Body)
-
-	{
-		var postMessage bytes.Buffer
-		encoder := json.NewEncoder(&postMessage)
-		encoder.Encode(&BsI)
-		io.Copy(os.Stdin, &postMessage)
-
-	}
 }
 
 type BadgesPage struct {

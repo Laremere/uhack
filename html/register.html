@@ -1,9 +1,11 @@
 {{template "header"}}
+	<div class="reg-form">
 		<form name="input" action="https://vps.redig.us/registercallback/" method="post">
-			Username: <input type="text" name="username" placeholder="username"><br/>
-			E-mail: <input type="text" name="email" placeholder="email"><br/>
-			First name: <input type="text" name="first"><br/>
-			Last name: <input type="text" name="last"><br/>
+			<label for="username">Username: <input type="text" name="username" placeholder="username"></label><br/>
+			<label for="email">E-mail: <input type="text" name="email" placeholder="email"></label><br/>
+			<label for="first name">First name: <input type="text" name="first" placeholder="First name"></label><br/>
+			<label for="last name">Last name: <input type="text" name="last" placeholder="Last name"></label><br/>
 			<input type="submit" value="submit">
 		</form>
+	</div>
 {{template "footer"}}
