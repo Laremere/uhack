@@ -13,6 +13,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -126,6 +127,8 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 
 	username := r.PostForm.Get("username")
 	email := r.PostForm.Get("email")
+	first := r.PostForm.Get("first")
+	last := r.PostForm.Get("last")
 
 	var count int
 
@@ -140,7 +143,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = db.Exec("INSERT INTO Users (Username, Email) VALUES (?,?)", username, email)
+	_, err = db.Exec("INSERT INTO Users (Username, Email, First, Last) VALUES (?,?,?,?)", username, email, first, last)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -364,8 +367,10 @@ func madeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//Get id of item
 	rid := r.Form.Get("id")
 
+	//Check if user already has made this
 	var count int
 	err = db.QueryRow("SELECT COUNT(*) FROM UsersRecipes WHERE UID=? AND RID=?", uid, rid).Scan(&count)
 	if err != nil {
@@ -378,12 +383,190 @@ func madeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = db.Exec("INSERT INTO UsersRecipes (UID, RID) VALUES ( ? , ? )", uid, rid)
+	//Get recipe info
+	url := "https://api.pearson.com/kitchen-manager/v1/recipes/" + rid
+	var result RecipeDetail
+	err = ApiCall(url, &result)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	//Find if you already have an item of the same skill
+	var SameSkill int
+	err = db.QueryRow("SELECT COUNT(*) FROM UsersRecipes WHERE UID=? AND skill=?", uid, result.Cooking_Method).Scan(&SameSkill)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	//Find if you already have an item of the same skill
+	var SameCuisine int
+	err = db.QueryRow("SELECT COUNT(*) FROM UsersRecipes WHERE UID=? AND cuisine=?", uid, result.Cuisine).Scan(&SameCuisine)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	//Insert item into UserRecipes
+	_, err = db.Exec("INSERT INTO UsersRecipes (UID, RID, skill, cuisine) VALUES ( ? , ? , ? , ? )", uid, rid, result.Cooking_Method, result.Cuisine)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	//The badges we need to check
+	badgesUpdate := make([]int, 0)
+
+	//Cusine Badge Check
+	rows, err := db.Query("SELECT ID FROM Badges WHERE ReqType='Cuisine' AND CuisineReq=?", result.Cuisine)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	for rows.Next() {
+		var bid int
+		err = rows.Scan(&bid)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		badgesUpdate = append(badgesUpdate, bid)
+	}
+
+	//Anything Badge Check
+	rows, err = db.Query("SELECT ID FROM Badges WHERE ReqType='Anything'")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	for rows.Next() {
+		var bid int
+		err = rows.Scan(&bid)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		badgesUpdate = append(badgesUpdate, bid)
+	}
+
+	//CuisineCount Badge Check
+	if SameCuisine == 0 {
+		rows, err = db.Query("SELECT ID FROM Badges WHERE ReqType='CuisineCount'")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		for rows.Next() {
+			var bid int
+			err = rows.Scan(&bid)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			badgesUpdate = append(badgesUpdate, bid)
+		}
+	}
+	//Skill Count Badge Check
+	if SameSkill == 0 {
+		rows, err = db.Query("SELECT ID FROM Badges WHERE ReqType='SkillCount'")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		for rows.Next() {
+			var bid int
+			err = rows.Scan(&bid)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			badgesUpdate = append(badgesUpdate, bid)
+		}
+	}
+	//Update Badge Counts
+	for _, badgeId := range badgesUpdate {
+		_, err = db.Exec("insert into UsersBadges (UID, BID, Progress) VALUES (?,?,1) ON DUPLICATE KEY UPDATE Progress= Progress + 1;", uid, badgeId)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
+	//Get email info
+	var email, first, last string
+	err = db.QueryRow("SELECT Email, First, Last FROM Users WHERE UID=?", uid).Scan(&email, &first, &last)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	//Detect Completed Badges
+	rows, err = db.Query("SELECT BadgeTemplateID FROM Badges JOIN UsersBadges ON Badges.ID = UsersBadges.BID WHERE UsersBadges.UID=? AND Badges.RequiredCount = UsersBadges.Progress", uid)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	type BadgeIssue struct {
+		//UserId string `json:"user_id"`
+		Email         string `json:"user_id"`
+		Temid         string `json:"badge_template_id"`
+		IssuedAt      string `json:"issued_at"`
+		IssuedTo      string `json:"issued_to"`
+		IssuedToFirst string `json:"issued_to_first_name"`
+		IssuedToLast  string `json:"issued_to_last_name"`
+		Expires       *int   `json:"expires_at"`
+	}
+
+	type BadgesIssue struct {
+		Badges []*BadgeIssue `json:"badges"`
+	}
+
+	var BsI BadgesIssue
+	BsI.Badges = make([]*BadgeIssue, 0)
+
+	for rows.Next() {
+		var b BadgeIssue
+		err = rows.Scan(&b.Temid)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		b.Email = email
+		b.IssuedAt = time.Now().Format("2006-01-02 03:04:05") + " -0500"
+		b.IssuedTo = first + " " + last
+		b.IssuedToFirst = first
+		b.IssuedToLast = last
+		BsI.Badges = append(BsI.Badges, &b)
+		fmt.Println("HI:", b.Temid)
+	}
+
+	var postMessage bytes.Buffer
+	encoder := json.NewEncoder(&postMessage)
+	encoder.Encode(&BsI)
+
+	req, _ := http.NewRequest("POST", "https://sandbox.youracclaim.com/api/v1/organizations/21a1da4f-d12d-44fb-adc0-c07cbc2c4220/badges", &postMessage)
+	req.Header.Set("Authorization", "Basic TEFIOVltTHFGLTV4XzlLODRLOFg6")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+
+	// resp, err := http.Post("https://sandbox.youracclaim.com/api/v1/organizations/21a1da4f-d12d-44fb-adc0-c07cbc2c4220/badges", "text/json", &postMessage)
+	// if err != nil {
+	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 	return
+	// }
+
+	io.Copy(os.Stdin, resp.Body)
+
+	{
+		var postMessage bytes.Buffer
+		encoder := json.NewEncoder(&postMessage)
+		encoder.Encode(&BsI)
+		io.Copy(os.Stdin, &postMessage)
+
+	}
 }
 
 type BadgesPage struct {
@@ -458,21 +641,24 @@ func badgesHandler(w http.ResponseWriter, r *http.Request) {
 
 func recipesHandler(w http.ResponseWriter, r *http.Request) {
 	type Cuisines struct {
+		Name string
+		Id   string
 	}
 
 	type CuisinesResponse struct {
+		Results []*Cuisines
 	}
 
 	url := "http://api.pearson.com:80/kitchen-manager/v1/cuisines?limit=10000"
-	var result RecipeSearchResults
+	var result CuisinesResponse
 
-	err = ApiCall(url, &result)
+	err := ApiCall(url, &result)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	tem, err := template.ParseFiles("html/search.html", "html/defines.html")
+	tem, err := template.ParseFiles("html/recipes.html", "html/defines.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -1,15 +1,62 @@
 {{template "header"}}
+<div class="recipe-form">
 	<form name="input" action="https://vps.redig.us/search/" method="post">
 		<label for="recipeName">Recipe Name: </label><input type="text" name="recipeName"><br>
 		<label for="ingredients">Ingredients: </label><input type="text" name="ingredients"><br>
-		<label for="cuisine">Cuisine: </label><select name="cuisine">
-					<option value="">All</option>
-					<option value="item1">Item1</option>
-					<option value="item2">Item2</option>
-				</select><br>
-		<label for="method">Cooking Method: </label><input type="text" name="method"><br>
+		<label for="cuisine">Cuisine: </label>
+		<select name="cuisine">
+			<option value="">All</option>
+			{{range .Results}}
+				<option value="{{.Id}}">{{.Name}}</option>
+			{{end}}
+		</select><br>
+		<label for="cooking method">Cooking Method: </label>
+		<select name="cooking method">
+			<option value="">All</option>
+<option value="baked custard">Baking: Baked custard</option>
+<option value="biscuit">Baking: Biscuit</option>
+<option value="churned">Baking: Churned</option>
+<option value="cream filling">Baking: Cream filling</option>
+<option value="creaming">Baking: Creaming</option>
+<option value="egg foam">Baking: Egg Foam</option>
+<option value="enriched dough">Baking: Enriched dough</option>
+<option value="molded cookie">Baking: Molded cookie</option>
+<option value="muffin">Baking: Muffin</option>
+<option value="piped chocolate">Baking: Piped chocolate</option>
+<option value="rolled-in dough">Baking: Rolled-in dough</option>
+<option value="sponge cake">Baking: Sponge Cake</option>
+<option value="sponge">Baking: Sponge</option>
+<option value="stirred custard">Baking: Stirred custard</option>
+<option value="straight dough">Baking: Straight dough</option>
+<option value="wafer cookie">Baking: Wafer cookie</option>
+<option value="baking">Baking</option>
+<option value="boiling">Boiling</option>
+<option value="braising">Braising</option>
+<option value="broiling">Broiling</option>
+<option value="broth">Broth</option>
+<option value="consumed">Consommé</option>
+<option value="cream">Cream</option>
+<option value="deep frying">Deep Frying</option>
+<option value="emulsion">Emulsion</option>
+<option value="grilling">Grilling</option>
+<option value="mayonnaise-based">Mayonnaise-based</option>
+<option value="pan-frying">Pan-frying</option>
+<option value="pilaf method">Pilaf method</option>
+<option value="poaching">Poaching</option>
+<option value="puree">Purée</option>
+<option value="reduction">Reduction</option>
+<option value="risotto method">Risotto method</option>
+<option value="roasting">Roasting</option>
+<option value="sauteing">Sautéing</option>
+<option value="simmering">Simmering</option>
+<option value="stewing">Stewing</option>
+<option value="temporary emulsion">Temporary emulsion</option>
+<option value="tossed">Tossed</option>
+<option value="uncooked">Uncooked</option>
+
 		<input type="submit" value="Search">
 	</form>
+</div>
 
 {{/*
     <h1>Completed Recipes</h1>

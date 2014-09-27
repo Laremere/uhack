@@ -1,10 +1,16 @@
 {{template "header"}}
-	{{.Name}}
-	<image src="{{.Image}}"/>
-	{{.Cuisine}}
-	{{.Cooking_Method}}
-	{{.Serves}}
-	{{.Yields}}
+	<div class="center">
+	<div class="singleRecipe-title">
+		{{.Name}}
+		{{.Cuisine}}<br>
+	</div>
+	<image src="{{.Image}}"/><br>
+	<div class="singleRecpe-subtitle">
+		{{.Cooking_Method}}
+		{{.Serves}}
+		{{.Yields}}
+	</div>
+	</div>
 	<ul>
 		{{range .Ingredients}}
 		<li>

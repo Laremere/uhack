@@ -3,9 +3,9 @@
 	{{range .Badges}}
 		{{.Name}}<br/>
 		{{.Description}}<br/>
-		{{.Progress}}/{{.ReqCount}}<br/>
+		{{.Progress}}/{{.ReqCount}}<br/><br/>
 	{{end}}
 {{else}}
-	Create an account or log in to view badge progress.
+	<p class="center">Create an account or log in to view badge progress.</p>
 {{end}}
 {{template "footer"}}
